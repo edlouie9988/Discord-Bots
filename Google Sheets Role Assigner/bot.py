@@ -1,4 +1,5 @@
 import os
+from gsheet_extract import get_info
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
@@ -16,18 +17,38 @@ intents.members = True
 
 bot = commands.Bot(intents=intents, command_prefix='/')
 
+# Update the Nicknames and Roles
 @bot.command()
-async def clean(ctx):
+async def update(ctx, arg):
+    # error handling
+    if (arg != "comp" and arg != "gen"):
+        await ctx.channel.send("Bad Argument")
+        return
+
+    # set the name of the role we need
+    if (arg == "comp"):
+        role_name = "Comp Team"
+    elif (arg == "gen"):
+        role_name = "General Member"
+    else:
+        return
+    
+    # call the function to extract info
+    name_arr, discord_id_arr = get_info(arg)
     for guild in bot.guilds:
         for member in guild.members:
-            if (member.nick == None and member.bot == False):
+            if (member.name in discord_id_arr):
+                # Change Nickname
+                name_idx = discord_id_arr.index(member.name)
+                # Skip if we have errors (generally going to be privilege errors)
                 try:
-                    reason = "No Nickname Provided"
-                    await ctx.guild.kick(member)
-                    await ctx.send(f'User {member.mention} has been kicked for {reason}')
+                    await member.edit(nick=name_arr[name_idx])
                 except:
                     continue
-    await ctx.channel.send("Clean Members Completed")
+                # add role
+                role = discord.utils.get(member.guild.roles, name=role_name)
+                await member.add_roles(role)
+    await ctx.channel.send("Update Completed")
 
 @bot.event
 async def on_command_err(ctx,error):
