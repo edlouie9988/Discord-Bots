@@ -9,6 +9,7 @@ from discord import Embed
 from discord.ext.commands import Cog
 from keep_alive import keep_alive
 from discord.ext.commands import CommandNotFound
+import datetime
 
 
 # setup 
@@ -31,7 +32,13 @@ Poll Creation
 '''
 @bot.command(name="attendpoll")
 async def attendpoll(ctx, channel: discord.TextChannel, date: str):
-    
+    correctDate = None
+    try:
+      date_split = date.split('/')
+      date_check = datetime.datetime(int(date_split[2]), int(date_split[0], int(date_split[1])))
+    except: 
+      await ctx.channel.send("BAD ARGUMENT")
+  
     embed = Embed(title = "Are you coming to practice on " + date + "?",
                 description = "Attendance Poll",
                 timestamp = datetime.utcnow())
@@ -57,7 +64,10 @@ Function used to end poll and transfer results into spreadsheet
 @bot.command(name="endattendpoll")
 async def endattendpoll(ctx, channel: discord.TextChannel, message_id: int):
     # grab responses
-    message = await channel.fetch_message(message_id)
+    try:  
+      message = await channel.fetch_message(message_id)
+    except:
+      await channel.send("No such message")
     yes_users = []
     no_users = []
     for reaction in message.reactions:
