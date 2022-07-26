@@ -18,11 +18,11 @@ intents.members = True
 bot = commands.Bot(intents=intents, command_prefix='/')
 
 # Update the Nicknames and Roles
-@bot.command()
+@bot.command(name="update")
 async def update(ctx, arg):
     # error handling
     if (arg != "comp" and arg != "gen"):
-        await ctx.channel.send("Bad Argument")
+        await ctx.channel.send("BAD ARGUMENT")
         return
 
     # set the name of the role we need
@@ -31,7 +31,8 @@ async def update(ctx, arg):
     elif (arg == "gen"):
         role_name = "General Member"
     else:
-        return
+      await ctx.channel.send("BAD ARGUMENT")  
+      return
     
     # call the function to extract info
     name_arr, discord_id_arr = get_info(arg)
