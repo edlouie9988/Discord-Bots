@@ -36,52 +36,26 @@ async def todo(ctx, *args):
     # open Google Sheet file by name
     spreadsheet = sa.open("FVE 2022-2023 Logistics")
     sheet = spreadsheet.worksheet("Overview")
-
-    # get first 4 columns and put into a text table
     
     # print columns
     if (args[0] == "view" or args[0] == "name"):
-        # print("entered")
-        # we can base the length ALWAYS by the number of tasks
-        task_col = (sheet.col_values(1))[2:]
-        max_length = len(task_col)
-        ppl_resp_col = (sheet.col_values(2))[2:]
-        if (len(ppl_resp_col) < max_length):
-            for i in range(max_length-len(ppl_resp_col)):
-                ppl_resp_col.append('')
-        exp_due_date_col = (sheet.col_values(3))[2:]
-        if (len(exp_due_date_col) < max_length):
-            for i in range(max_length-len(exp_due_date_col)):
-                exp_due_date_col.append('')
-        completion_col = (sheet.col_values(4))[2:]
-        if (len(completion_col) < max_length):
-            for i in range(max_length-len(completion_col)):
-                completion_col.append('')
-        notes_col = (sheet.col_values(5))[2:]
-        if (len(notes_col) < max_length):
-            for i in range(max_length-len(notes_col)):
-                notes_col.append('')
+        # get rows
+        listofdfrows = []
+        for i in range(3,100):
+            if (len(sheet.row_values(i)) == 0):
+                break
+            row_list = sheet.row_values(i)
+            if (len(row_list) != 5):
+                for i in range(5-len(row_list)):
+                    row_list.append('')
+            listofdfrows.append(row_list)
+            
 
-        assert max_length == len(notes_col) == len(completion_col) == len(exp_due_date_col) == len(ppl_resp_col)
-        # create dict for pandas conversion
-        todo_table = {'Tasks': task_col, 'People Responible': ppl_resp_col, 
-            'Expected Due Date': exp_due_date_col, 'Completion Date': completion_col, 'Notes': notes_col}
-        # pandas conversion
-        todo_df = pd.DataFrame(todo_table)    
-        # print(todo_df.to_string())
-
-        # convert df to np to list of rows
-        listofdfrows = todo_df.to_numpy().tolist()
-        # print(listofdfrows)
-
-        # print(args[1])
         if (args[0] == "view" and (len(args) == 1 or len(args) == 2)):
             if (len(args) == 2):
                 adjusted_table = listofdfrows[:int(args[1])]
             else:
                 adjusted_table = listofdfrows
-            # print(listofdfrows)
-
             num_tasks = len(adjusted_table)
             if (num_tasks % 5 == 0):
                 num_embeds_needed = num_tasks // 5
@@ -106,7 +80,7 @@ async def todo(ctx, *args):
                 if (args[1] in row[1]):
                     embed.add_field(
                         name=f'**{row[0]}**', 
-                        value=f'>People Responsible: {row[1]}\n> Expected Due Date: {row[2]}\n> Completion Date: {row[3]}\n> Notes: {row[4]}',
+                        value=f'> People Responsible: {row[1]}\n> Expected Due Date: {row[2]}\n> Completion Date: {row[3]}\n> Notes: {row[4]}',
                         inline=False
                     )
             if (len(embed.fields) == 0):
@@ -117,18 +91,42 @@ async def todo(ctx, *args):
             await ctx.channel.send(embed=embed)
 
     # update the completion date
+    # args[1] -> task name
+    # args[2] -> date
     elif(args[0] == "complete"):
-        if (len(args) != 2):
+        if (len(args) != 3):
             await ctx.channel.send("INVALID ARGUMENTS")
             return
-        await ctx.channel.send("Command Not Finished")
+        
+        # get rows
+        listofdfrows = []
+        for i in range(3,100):
+            if (len(sheet.row_values(i)) == 0):
+                break
+            row_list = sheet.row_values(i)
+            if (len(row_list) != 5):
+                for i in range(5-len(row_list)):
+                    row_list.append('')
+            listofdfrows.append(row_list)
 
-        print("hi")
+        for i in range(len(listofdfrows)):
+            if (args[1] in listofdfrows[i][0]):
+                sheet.update_cell(i+3, 4, args[2])
+                break
+
     # create new to-do: need name of Task, People Responsible, Due Date
     elif(args[0] == "add"):
         if (len(args) != 5):
             await ctx.channel.send("INVALID ARGUMENTS")
             return
+        
+        # find next empty row
+        i = 1
+        for i in range(1,100):
+            if (len(sheet.row_values(i)) == 0):
+                break
+        row = i
+
         await ctx.channel.send("Command Not Finished")
             
         print("hi")
@@ -138,7 +136,8 @@ async def todo(ctx, *args):
             await ctx.channel.send("INVALID ARGUMENTS")
             return
         await ctx.channel.send("Command Not Finished")
-        
+    
+
         print("hi")
     else: 
         await ctx.channel.send("BAD ARGUMENTS")
