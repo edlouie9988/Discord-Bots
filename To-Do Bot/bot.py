@@ -116,7 +116,7 @@ async def todo(ctx, *args):
 
     # create new to-do: need name of Task, People Responsible, Due Date, Notes
     elif(args[0] == "add"):
-        if (len(args) != 5):
+        if (len(args) != 5 and len(args) != 4):
             await ctx.channel.send("INVALID ARGUMENTS")
             return
         
@@ -131,7 +131,10 @@ async def todo(ctx, *args):
         sheet.update_cell(row, 1, args[1])
         sheet.update_cell(row, 2, args[2])
         sheet.update_cell(row, 3, args[3])
-        sheet.update_cell(row, 5, args[4])
+        if (len(args) == 4):
+            sheet.update_cell(row, 5, '')
+        else:
+            sheet.update_cell(row, 5, args[4])
 
             
     # delete row when to-do is not needed
@@ -139,6 +142,22 @@ async def todo(ctx, *args):
         if (len(args) != 2):
             await ctx.channel.send("INVALID ARGUMENTS")
             return
+
+        # get rows
+        listofdfrows = []
+        for i in range(3,100):
+            if (len(sheet.row_values(i)) == 0):
+                break
+            row_list = sheet.row_values(i)
+            if (len(row_list) != 5):
+                for i in range(5-len(row_list)):
+                    row_list.append('')
+            listofdfrows.append(row_list)
+        for i in range(len(listofdfrows)):
+            if (args[1] in listofdfrows[i][0]):
+                sheet.delete_rows(i+3)
+                break
+
         await ctx.channel.send("Command Not Finished")
     
     else: 
